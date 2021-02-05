@@ -1,0 +1,484 @@
+package mvc.service;
+
+import helper.JacksonUtil;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+/**
+ * 
+ * @author jingwei·li
+ * @date 2020/3/31
+ */
+@Service
+public class DataManageService {
+
+	@Autowired JdbcTemplate jdbcTemplate;
+	@Autowired JdbcTemplate jdbcTemplate4;
+	private JacksonUtil jacksonUtil = JacksonUtil.buildNormalBinder();
+	
+	public String getRequest(HttpServletRequest request,String field){
+		return String.valueOf(request.getParameter(field));
+	}
+	public boolean IsNull(String str){
+		if(str.equals("")|| str == null || str.equals("null")) return true;
+		return false;
+	}
+	/**
+	 * 数据接入管理 → 查询数据列表
+	 * @param request
+	 * @return
+	 */
+	public String getDataList(HttpServletRequest request){
+		String company = getRequest(request, "company");
+		String status = getRequest(request, "status");
+		System.out.println(company);
+		String tj = "";
+		ArrayList<String> condition = new ArrayList<>();
+		if(!IsNull(company)){
+			tj += " and company like ?";
+			condition.add("%"+company+"%");
+		}
+		if(!IsNull(status) && !status.equals("0")){
+			tj += " and status = ? ";
+			condition.add(status);
+		}
+		String sql = "select * from tb_data_access where 1 = 1 "+tj;
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql,condition.toArray(new String[]{})));
+		
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("datas", resultList);
+		return jacksonUtil.toJson(resultMap);
+	}
+	
+	/**
+	 * 数据接入管理 → 获取图标显示数据
+	 * @return
+	 */
+	public String getChartInfo(){
+		String sql = "select count(*) as count,status from tb_data_access t group by status";
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql));
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("online", 0);
+		resultMap.put("end", 0);
+		if(resultList.size() > 0 ){
+			for(Map<String,Object> map : resultList){
+				if(map.get("status").equals("1")){
+					resultMap.put("online", map.get("count"));
+				}
+				if(map.get("status").equals("2")){
+					resultMap.put("end", map.get("count"));
+				}
+			}
+		}
+		return jacksonUtil.toJson(resultMap);
+	}
+	
+	/**
+	 * 数据接入管理 → 修改数据
+	 * @param request
+	 * @return
+	 */
+	public String editData(HttpServletRequest request){
+		String id = getRequest(request, "id");
+		String company = getRequest(request, "company");
+		String ip_addr = getRequest(request, "ip_addr");
+		String abb_name = getRequest(request, "abb_name");
+		String scale = getRequest(request, "scale");
+		String stime = getRequest(request, "stime");
+		String etime = getRequest(request, "etime");
+		String status = getRequest(request, "status");
+		String company_id = getRequest(request, "company_id");
+		String access_scale = getRequest(request, "access_scale");
+		ArrayList<String> condition = new ArrayList<>();
+		String sql = "update tb_data_access set company = ? ,company_id = ?, ip_addr = ? , abb_name = ?,scale = ?, status = ? , access_scale = ?  ";
+		condition.add(company);condition.add(company_id);condition.add(ip_addr);condition.add(abb_name);condition.add(scale);condition.add(status);condition.add(access_scale);
+		if(!IsNull(stime)){
+			sql += " ,stime = ? ";
+			condition.add(stime);
+		}
+		if(!IsNull(etime)){
+			sql += " ,etime =? ";
+			condition.add(stime);
+		}
+		sql+= " where id = ? ";
+		condition.add(id);
+		int result = jdbcTemplate.update(sql,condition.toArray(new String[]{}));
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("msg", result>0?"0":"1");
+		return jacksonUtil.toJson(resultMap);
+	}
+	/**
+	 * 数据接入管理 → 添加数据
+	 * @param request
+	 * @return
+	 */
+	public String addData(HttpServletRequest request){
+		String company = getRequest(request, "company");
+		String company_id = getRequest(request, "company_id");
+		String ip_addr = getRequest(request, "ip_addr");
+		String abb_name = getRequest(request, "abb_name");
+		String scale = getRequest(request, "scale");
+		String stime = getRequest(request, "stime");
+		String etime = getRequest(request, "etime");
+		String status = getRequest(request, "status");
+		String access_scale = getRequest(request, "access_scale");
+		ArrayList<String> condition = new ArrayList<>();
+		String sqlbegin = "insert into tb_data_access(company,company_id,ip_addr,abb_name,scale,status,access_scale";
+		String sqlend = " values (?,?,?,?,?,?,?";
+		condition.add(company);condition.add(company_id);condition.add(ip_addr);condition.add(abb_name);condition.add(scale);condition.add(status);condition.add(access_scale);
+		if(!IsNull(stime)){
+			sqlbegin += ",stime";
+			sqlend += " ,to_date(?,'yyyy-MM-dd') ";
+			condition.add(stime);
+		}
+		if(!IsNull(etime)){
+			sqlbegin += ",etime";
+			sqlend += " ,to_date(?,'yyyy-MM-dd') ";
+			condition.add(stime);
+		}
+		sqlbegin+= " )";
+		sqlend += ")";
+		int result = jdbcTemplate.update(sqlbegin+sqlend,condition.toArray(new String[]{}));
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("msg", result>0?"0":"1");
+		return jacksonUtil.toJson(resultMap);
+	}
+	
+	/**
+	 * 数据接入管理 → 删除数据
+	 * @return
+	 */
+	public String delData(HttpServletRequest request){
+		String id= getRequest(request, "id");
+		String sql = "update tb_data_access set deleted = 1 where id= ? ";
+		int result = jdbcTemplate.update(sql,id);
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("msg", result>0?"0":"1");
+		
+		
+		return jacksonUtil.toJson(resultMap);
+		
+	}
+	/**
+	 * 运力分析报告 → 查询数据
+	 * @return
+	 */
+	public String getAnalyze(HttpServletRequest request){
+		String stime = getRequest(request, "stime");
+		String etime = getRequest(request, "etime");
+		Integer page = Integer.valueOf(getRequest(request, "page"));
+		Integer pageSize = Integer.valueOf(getRequest(request, "pageSize"));
+		
+		String tj = "";
+		if(!IsNull(stime)){
+			tj += " and t.dbtime >='"+stime+"'";
+		}
+		if(!IsNull(etime)){
+			tj += " and t.dbtime <= '"+etime+"'";
+		}
+		String sql = "select tt.*,t2.* from  ("
+				//tb_order_hottime 和 tb_order_hotpot 表 左连接 拼到一起 
+				+ "select hot_time, time_num, dbtime,area_name, area_num from (select hot_time,time_num,dbtime, @rowno:=@rowno+1 as rn from tb_order_hottime r ,(select @rowno:=0) t  order by dbtime desc ) t"
+				+ " left join (select area_name,area_num, @rowno:=@rowno+1 as rn from tb_order_hotpot  r ,(select @rowno:=0) t order by dbtime desc) t2 on t.rn = t2.rn  "
+				+ " where 1 = 1 "+tj+" limit  "+ (page - 1) * pageSize *5 +","+pageSize *5+" )tt "
+				
+				+ "left join  (select create_order_num,dep_order_num,dep_order_veh ,dbtime ,concat(TRUNCATE(dep_order_num / create_order_num,2) * 100 ,'%') as end_order,"
+				//每日派单的 昨日环比 保留两位小数
+				+ "concat(TRUNCATE((create_order_num / (select create_order_num from tb_order_num where dbtime = t.dbtime -1 ))* 100 , 2 ), '%') as create_yesterday, "
+				//每日派单的上周同比  保留两位小数
+				+ "concat(TRUNCATE((create_order_num / (select create_order_num from tb_order_num where dbtime = t.dbtime -7 ))* 100 , 2 ), '%') as create_lastweek, "
+				//订单完成量的 昨日环比 保留两位小数
+				+ "concat(TRUNCATE((dep_order_num / (select dep_order_num from tb_order_num where dbtime = t.dbtime -1 ))* 100 , 2 ), '%') as dep_yesterday, "
+				//订单完成量的上周同比  保留两位小数
+				+ "concat(TRUNCATE((dep_order_num / (select dep_order_num from tb_order_num where dbtime = t.dbtime -7 ))* 100 , 2 ), '%') as dep_lastweek, "
+				//活跃车辆的 昨日环比 保留两位小数
+				+ "concat(TRUNCATE((dep_order_veh / (select dep_order_veh from tb_order_num where dbtime = t.dbtime -1 ))* 100 , 2 ), '%') as veh_yesterday, "
+				//活跃车辆的上周同比  保留两位小数
+				+ "concat(TRUNCATE((dep_order_veh / (select dep_order_veh from tb_order_num where dbtime = t.dbtime -7 ))* 100 , 2 ), '%') as veh_lastweek from  tb_order_num t ) t2 "
+				+ " on tt.dbtime = t2.dbtime  order by tt.dbtime asc ";
+		System.out.println(sql);
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql));
+		String countSql = "select count(*) as count from tb_order_num t where 1 = 1 "+tj;
+		List<Map<String, Object>> countList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(countSql));
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("datas", resultList);
+		resultMap.put("count", countList.size() > 0 ?countList.get(0).get("count"):"0");
+		return jacksonUtil.toJson(resultMap);
+	}
+	
+	/**
+	 * 特殊目标查询 → 查询数据
+	 * @param request
+	 * @return
+	 */
+	public String getSpecialTarget(HttpServletRequest request){
+		String stime = getRequest(request, "stime");
+		String etime = getRequest(request, "etime");
+		String company_id = getRequest(request, "company_id");
+		String driver_name = getRequest(request, "driver_name");
+		String vehicleno = getRequest(request, "vehicleno");
+		String licenseid = getRequest(request, "licenseid");
+		Integer page = Integer.valueOf(getRequest(request, "page"));
+		Integer pageSize = Integer.valueOf(getRequest(request, "pageSize"));
+		
+		String tj = "";
+		ArrayList<Object> condition = new ArrayList<>();
+		if(!IsNull(stime)){
+			tj += " and t.month >= ? ";
+			condition.add(stime);
+		}
+		if(!IsNull(etime)){
+			tj += " and t.month <= ? ";
+			condition.add(etime);
+		}
+		if(!IsNull(company_id) && !company_id.equals("0")){
+			tj += " and t.companyid = ? ";
+			condition.add(company_id);
+		}
+		if(!IsNull(driver_name)){
+			tj += " and t.drivername like ? ";
+			condition.add("%"+driver_name+"%");
+		}
+		if(!IsNull(vehicleno)){
+			tj += " and t.vehicleno like ? ";
+			condition.add("%"+vehicleno+"%");
+		}
+		if(!IsNull(licenseid)){
+			tj += " and t.licenseid like ? ";
+			condition.add("%"+licenseid+"%");
+		}
+		String countSql = "select count(*) as count  from (select t.companyid from tb_order_operate t where 1 = 1 " +tj 
+				+ " ) tt ,tb_global_company t2  where tt.companyid = t2.company_id ";
+		List<Map<String, Object>> countList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(countSql,condition.toArray(new Object[]{})));
+		condition.add((page -1) * pageSize);
+		condition.add(pageSize);
+		String sql = "select tt.*,t2.abb_name from (select t.vehicleno,t.drivername,t.order_num,t.companyid,t.licenseid,t.factprice,CONCAT(replace(t.month,'-','年'),'月') as month "
+				+ " from tb_order_operate t where 1 = 1  " +tj 
+				+ "  order by t.month asc ) tt ,tb_global_company t2  where tt.companyid = t2.company_id limit ?, ?";
+		List<Map<String, Object>> dataList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql,condition.toArray(new Object[]{})));
+		Map<String,Object> resultMap = new HashMap<>();
+		resultMap.put("datas", dataList);
+		resultMap.put("count", countList.size() > 0 ? countList.get(0).get("count"):"0");
+		return jacksonUtil.toJson(resultMap);
+	}
+	
+	/**
+	 * 特殊目标查询 → 查询驾驶员信息
+	 * @param request
+	 * @return
+	 */
+	public String getDriverInfo(HttpServletRequest request){
+		String lincenseid = getRequest(request, "lincenseid");
+		Map<String, Object> map = new HashMap<>();
+		if (IsNull(lincenseid)) {
+			map.put("msg", 1);
+			map.put("info", "身份证不能为空");
+			return jacksonUtil.toJson(map);
+		}
+		String sql = "select t.* ,t2.* from person_base_info t, person_taxi_info t2 where t.id = t2.PERSON_ID and t.ID_NUMBER = ? ";
+		List<Map<String, Object>> resultList = jdbcTemplate4.queryForList(sql,lincenseid);
+		
+		map.put("datas", resultList);
+		map.put("msg", 0);
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 特殊目标查询 → 查询车辆信息
+	 * @param request
+	 * @return
+	 */
+	public String getCarInfo(HttpServletRequest request){
+		String cphm = getRequest(request, "cphm");
+		Map<String, Object> map = new HashMap<>();
+		if (IsNull(cphm)) {
+			map.put("msg", 1);
+			map.put("info", "车牌不能为空");
+			return jacksonUtil.toJson(map);
+		}
+		String sql = "select *,REPLACE(AUTO_NUM,'.','') as AUTO_NUM from platcar_base_info where REPLACE(AUTO_NUM,'.','') = ? ";
+		List<Map<String, Object>> resultList = jdbcTemplate4.queryForList(sql,cphm);
+		
+		map.put("datas", resultList);
+		map.put("msg", 0);
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 特殊目标查询 → 查询订单明细
+	 * @param request
+	 * @return
+	 */
+	public String getPayInfo(HttpServletRequest request){
+		String companyid = getRequest(request, "companyid");
+		String month = getRequest(request, "month");
+		String vehicleno = getRequest(request, "vehicleno");
+		String lincenseid = getRequest(request, "lincenseid");
+		Integer page = Integer.valueOf(getRequest(request, "page"));
+		Integer pageSize = Integer.valueOf(getRequest(request, "pageSize"));
+		
+		System.out.println(companyid+","+month+","+vehicleno+","+lincenseid);
+		Map<String, Object> map = new HashMap<>();
+		if (IsNull(companyid) || IsNull(month) || IsNull(vehicleno) || IsNull(lincenseid) ) {
+			map.put("msg", 1);
+			map.put("info", "关键字段不能为空");
+			return jacksonUtil.toJson(map);
+		}
+		String year = (month.replaceAll("年", "").replaceAll("月", "")).substring(2);
+//		String searchMonth = (month.replaceAll("年", "").replaceAll("月", "")).substring(4);
+		String sql = " select tt.*,t2.abb_name from (select companyid,DRIVERNAME,LICENSEID,VEHICLENO,deptime,deparea,desttime,destarea,FACTPRICE from tb_operatepay_"+year
+				+ " where companyid = '"+ companyid +"' and VEHICLENO = '"+ vehicleno +"' and LICENSEID = '"+ lincenseid +"' "
+				+ " ) tt ,tb_global_company t2  where tt.companyid = t2.company_id limit "+(page-1) * pageSize+","+pageSize;
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql));
+		
+		String countSql = "select count(*) as count from tb_operatepay_"+year
+				+ " where companyid = '"+ companyid +"' and VEHICLENO = '"+ vehicleno +"' and LICENSEID = '"+ lincenseid +"' ";
+		List<Map<String, Object>> countList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(countSql));
+		map.put("datas", resultList);
+		map.put("count", countList.size() > 0 ? countList.get(0).get("count"):"0");
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 数据接入检测 → 数据接入检测查询
+	 * @return
+	 */
+	public String getCompanyDataFlow(HttpServletRequest request){
+		String sql = "select ifnull(t.dataflow,0) as dataflow,ifnull(t.flag,0) as flag,t.dbtime,t2.abb_name,t.companyid from tb_global_company t2  left join tb_companyDataFlow t "
+				+ "on t.companyid = t2.company_id and date_format(t.datetime,'%Y-%m-%d') = date_format(now(),'%Y-%m-%d'') where  t2.operating = '0' ";
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql));
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("datas", resultList);
+		map.put("msg", 0);
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 单车收益分析 → 获取单车数据
+	 * @param request
+	 * @return
+	 */
+	public String getBikeAnalysis(HttpServletRequest request){
+		String time = getRequest(request, "time");
+		String sql = "select t.dbtime,t.companyid,ifnull(t.order_ave,0) order_ave,ifnull(t.price_ave,0) price_ave,ifnull(t.mile_ave,0) mile_ave,ifnull(t.dur_ave,0) dur_ave" +
+				" ,t2.abb_name  from (select abb_name,company_id from tb_global_company/* where operating = 0*/) t2 " +
+				" left join (select t.* from tb_order_yy t where t.dbtime = STR_TO_DATE('2020-4-6','%Y-%m-%d') ) t on t.companyid = t2.company_id";
+		int[] key = new int[]{0,1,7,30};
+		String[] value = new String[]{"行业平均","昨日平均","上周平均","上月平均"};
+		for(int i =0 ; i < 4 ; i++ ){
+			sql += "   union all  select DATE_SUB('"+ time +"', INTERVAL "+key[i]+" DAY) as dbtime,'' companyid, TRUNCATE(avg(order_ave),2) as order_ave," +
+					" TRUNCATE(avg(price_ave),2) as price_ave,TRUNCATE(avg(mile_ave),2) as mile_ave ,TRUNCATE(avg(dur_ave),2) as dur_ave ,'"+ value[i] +"' as abb_name" +
+					" from tb_order_yy "+
+					" where  dbtime = DATE_SUB('"+ time +"', INTERVAL "+key[i]+" DAY) group by dbtime  ";
+		}
+		List<Map<String, Object>> resultList = JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql));
+		Map<String, Object> map = new HashMap<>();
+		map.put("datas", resultList);
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 单车收益分析 → 获取单车Echarts
+	 * @param request
+	 * @return
+	 */
+	public String getBikeEcharts(HttpServletRequest request){
+		String time = getRequest(request, "time");
+		Map<String, Object> map = new HashMap<>();
+		int[] key = new int[]{0,1,7,30};
+		String[] mapKey = new String[]{"today","yesterDay","lastWeek","lastMonth"};
+		for(int i =0 ; i < 4 ; i++ ){
+			String sql = "select DATE_SUB('"+ time +"', INTERVAL "+key[i]+" DAY) as dbtime, t2.abb_name, ifnull(t.order_ave, 0) order_ave, ifnull(t.price_ave, 0) price_ave, ifnull(t.mile_ave, 0) mile_ave, ifnull(t.dur_ave, 0) dur_ave "
+					+ " from (select abb_name, company_id from tb_global_company /*where operating = 0*/ order by company_id asc) t2 left join  "
+					+ "  (select t.*  from tb_order_yy t where t.dbtime = DATE_SUB('"+ time +"', INTERVAL "+key[i]+" DAY) ) t  on t.companyid =  t2.company_id  ";
+			map.put(mapKey[i], JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql)));
+		}
+		return jacksonUtil.toJson(map);
+	}
+	
+
+	/**
+	 * 企业运营登记 → 查询企业列表
+	 * @param request
+	 * @return
+	 */
+	public String getBikeCompany(HttpServletRequest request){
+		String abb_name = getRequest(request, "abb_name");
+		String name = getRequest(request, "name");
+		String operating = getRequest(request, "operating");
+		String sql = "select * from tb_global_company t where 1 = 1 ";
+		if(!IsNull(name)){
+			sql += " and name like '%"+ name +"%' ";
+		}
+		if(!IsNull(abb_name)){
+			sql += " and abb_name like '%"+ abb_name +"%' ";
+		}
+		//2： 全部 
+		if(!IsNull(operating) && !"2".equals(operating)){
+			sql += " and OPERATING = '"+ operating +"' ";
+		}
+		Map<String, Object> map = new HashMap<>();
+		map.put("datas", JacksonUtil.getUpperCaseList(jdbcTemplate.queryForList(sql)));
+		return jacksonUtil.toJson(map);
+	}
+	
+	/**
+	 * 企业运营登记 → 添加企业列表
+	 * @param request
+	 * @return
+	 */
+	public String addBikeCompany(HttpServletRequest request){
+		String id = getRequest(request, "id");
+		String abb_name = getRequest(request, "abb_name");
+		String name = getRequest(request, "name");
+		String operating = getRequest(request, "operating");
+		String sql = " insert into tb_global_company (ID,COMPANY_ID,ABB_NAME,NAME,OPERATING) values(?,?,?,?,?)";
+		Map<String, Object> map = new HashMap<>();
+		map.put("msg", jdbcTemplate.update(sql,UUID.randomUUID().toString(),id,abb_name,name,operating)>0? "0":"1");
+		return jacksonUtil.toJson(map);
+	}
+
+	/**
+	 * 企业运营登记 → 修改企业列表
+	 * @param request
+	 * @return
+	 */
+	public String updateBikeCompany(HttpServletRequest request){
+		String jlid = getRequest(request, "jlid");
+		String id = getRequest(request, "id");
+		String abb_name = getRequest(request, "abb_name");
+		String name = getRequest(request, "name");
+		String operating = getRequest(request, "operating");
+		String sql = " update tb_global_company set COMPANY_ID = ? ,ABB_NAME = ? ,NAME = ? ,OPERATING = ?  where ID = ? ";
+		Map<String, Object> map = new HashMap<>();
+		map.put("msg", jdbcTemplate.update(sql,id,abb_name,name,operating,jlid)>0? "0":"1");
+		return jacksonUtil.toJson(map);
+	}
+	/**
+	 * 企业运营登记 → 删除企业列表
+	 * @param request
+	 * @return
+	 */
+	public String delBikeCompany(HttpServletRequest request){
+		String id = getRequest(request, "id");
+		String sql = "delete from  tb_global_company t  where id = ? ";
+		Map<String, Object> map = new HashMap<>();
+		map.put("msg", jdbcTemplate.update(sql,id)>0? "0":"1");
+		return jacksonUtil.toJson(map);
+	}
+}

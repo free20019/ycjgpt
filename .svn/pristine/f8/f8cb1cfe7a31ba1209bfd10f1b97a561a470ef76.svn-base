@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2009-2016 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+<!--   <settings> -->
+<!--     <setting name="useGeneratedKeys" value="false"/> -->
+<!--     <setting name="useColumnLabel" value="true"/> -->
+<!--   </settings> -->
+
+<!--   <typeAliases> -->
+<!--     <typeAlias alias="UserAlias" type="org.apache.ibatis.submitted.complex_property.User"/> -->
+<!--   </typeAliases> -->
+
+  <environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC">
+        <property name="" value=""/>
+      </transactionManager>
+      <dataSource type="UNPOOLED">
+        <property name="driver" value="com.mysql.jdbc.Driver"/>
+       <!--  <property name="url" value="jdbc:mysql://192.168.11.210:3306/wyc"/> -->
+       	<property name="url" value="jdbc:mysql://localhost:3306/wyc"/>
+        <property name="username" value="root"/>
+       <!--  <property name="password" value="twkj_root"/> -->
+         <property name="password" value="123456"/>
+      </dataSource>
+    </environment>
+  </environments>
+
+ <mappers>
+ 	<mapper resource="mapper/CljcxxMapper.xml"/>
+ 	<mapper resource="mapper/ClsqxxMapper.xml"/>
+ 	<mapper resource="mapper/ClsyrxxMapper.xml"/>
+ 	<mapper resource="mapper/JsyjcxxMapper.xml"/>
+ 	<mapper resource="mapper/JsysqxxMapper.xml"/>
+ 	<mapper resource="mapper/JsyxyxxMapper.xml"/>
+ 	<mapper resource="mapper/UserMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_answerMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_appointmentMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_classroomMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_examMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_jurisdictionMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_postMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_questionsMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_seatMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_sourceMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_subjectMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_testcenterMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_testpaperMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_testplanMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_testpositionMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_topicruleMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_topictypeMapper.xml"/>
+ 	<mapper resource="mapper/Wyc_usertableMapper.xml"/>
+ </mappers>
+
+</configuration>

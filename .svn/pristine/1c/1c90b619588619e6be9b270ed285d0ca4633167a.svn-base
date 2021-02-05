@@ -1,0 +1,281 @@
+package mvc.controllers;
+
+import helper.DownloadAct;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import mvc.service.CommonServer;
+import mvc.service.mapServer;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+@RequestMapping(value = "/map")
+public class mapAction {
+	private mapServer mapServer;
+	
+	public mapServer getMapServer() {
+		return mapServer;
+	}
+	@Autowired
+	public void setMapServer(mapServer mapServer) {
+		this.mapServer = mapServer;
+	}
+	@RequestMapping("/getMapLayered")
+	@ResponseBody
+	public String getMapLayered(HttpServletRequest request){
+		return mapServer.getMapLayered(request);
+	}
+	@RequestMapping("/getGet")
+	@ResponseBody
+	public String getGet(HttpServletRequest request){
+		return mapServer.getGet(request);
+	}
+	@RequestMapping("/test")
+	@ResponseBody
+	public String test(HttpServletRequest request){
+		return mapServer.test();
+	}
+	@RequestMapping("/getHistor")
+	@ResponseBody
+	public String getHigetNoHGstor(HttpServletRequest request){
+		return mapServer.getHistor(request);
+	}
+	@RequestMapping("/getOrder")
+	@ResponseBody
+	public String getOrder(HttpServletRequest request){
+		return mapServer.getOrder(request);
+	}
+	@RequestMapping("/getVhic")
+	@ResponseBody
+	public String getVhic(HttpServletRequest request){
+		return mapServer.getVhic(request);
+	}
+	@RequestMapping("/getCompany")
+	@ResponseBody
+	public String getCompany(){
+		return mapServer.getCompany();
+	}
+	@RequestMapping("/getVehicle")
+	@ResponseBody
+	public String getVehicle(HttpServletRequest request){
+		return mapServer.getVehicle(request);
+	}
+	@RequestMapping("/getArea")
+	@ResponseBody
+	public String getArea(){
+		return mapServer.getArea();
+	}
+	@RequestMapping("/addArea")
+	@ResponseBody
+	public String addArea(HttpServletRequest request){
+		return mapServer.addArea(request);
+	}
+	@RequestMapping("/editArea")
+	@ResponseBody
+	public String editArea(HttpServletRequest request){
+		return mapServer.editArea(request);
+	}
+	@RequestMapping("/delArea")
+	@ResponseBody
+	public String delArea(HttpServletRequest request){
+		return mapServer.delArea(request);
+	}
+	@RequestMapping("/getFance")
+	@ResponseBody
+	public String getFance(HttpServletRequest request){
+		return mapServer.getFance(request);
+	}
+	@RequestMapping("/getDynamic")
+	@ResponseBody
+	public String getDynamic(HttpServletRequest request){
+		return mapServer.getDynamic(request);
+	}
+	@RequestMapping("/compSelect")
+	@ResponseBody
+	public String compSelect(){
+		return mapServer.compSelect();
+	}
+	@RequestMapping("/getNewVehicle")
+	@ResponseBody
+	public String getNewVehicle(HttpServletRequest request){
+		return mapServer.getNewVehicle(request);
+	}
+	@RequestMapping("/qyrjyytj")
+	@ResponseBody
+	public String qyrjyytj(HttpServletRequest request){
+		return mapServer.qyrjyytj(request);
+	}
+	@RequestMapping("/qyrjyytjexcle")
+	@ResponseBody
+	public String qyrjyytjexcle(HttpServletRequest request,
+			HttpServletResponse response) throws IOException{
+		String a[] = {"企业名称","日均活跃驾驶员","日均活跃车辆","日均订单","日均营收(元)","日均行驶里程(公里)","日均载客时长(分)"};//导出列明
+		String b[] = {"ABB_NAME","HYJSY","HYCL","ZDD","ZYS","ZXSLC","ZZKSC"};//导出map中的key
+		String time = String.valueOf(request.getParameter("time"));
+		String type = String.valueOf(request.getParameter("type"));
+		String gzb = time + "企业日均营运分析";//导出sheet名和导出的文件名
+//		if(type.equals("1") || type.equals("3")){
+//			gzb = time + "企业日均营运分析";
+//			a = {"企业名称","日均活跃驾驶员","日均活跃车辆","日均订单","日均营收(元)","日均行驶里程(公里)","日均载客时长(分)"};//导出列明
+//			b = {"ABB_NAME","HYJSY","HYCL","ZDD","ZYS","ZXSLC","ZZKSC"};//导出map中的key
+//			if(type.equals("3")) {
+//				gzb = time + "企业日均单车分析";
+//				a = {"企业名称","日均活跃驾驶员","日均活跃车辆","日均订单","日均营收(元)","日均行驶里程(公里)","日均载客时长(分)"};//导出列明
+//				b = {"ABB_NAME","HYJSY","HYCL","ZDD","ZYS","ZXSLC","ZZKSC"};//导出map中的key
+//			}
+//		}
+//		else{
+//			gzb = time + "企业月度营运统计";
+//			a = {"企业名称","日均活跃驾驶员","日均活跃车辆","日均订单","日均营收(元)","日均行驶里程(公里)","日均载客时长(分)"};//导出列明
+//			b = {"ABB_NAME","HYJSY","HYCL","ZDD","ZYS","ZXSLC","ZZKSC"};//导出map中的key
+//			if(type.equals("4")) {
+//				gzb = time + "企业月度单车统计";
+//				a = {"企业名称","日均活跃驾驶员","日均活跃车辆","日均订单","日均营收(元)","日均行驶里程(公里)","日均载客时长(分)"};//导出列明
+//				b = {"ABB_NAME","HYJSY","HYCL","ZDD","ZYS","ZXSLC","ZZKSC"};//导出map中的key
+//			}
+//		}
+		String msg = mapServer.qyrjyytj(request);
+		List<Map<String, Object>>list = DownloadAct.parseJSON2List2(msg);
+		DownloadAct.download(request,response,a,b,gzb,list);
+		return null;
+	}
+	@RequestMapping("/qyrjdcfx")
+	@ResponseBody
+	public String qyrjdcfx(HttpServletRequest request){
+		return mapServer.qyrjdcfx(request);
+	}
+	@RequestMapping("/qyrjdcfxexcle")
+	@ResponseBody
+	public String qyrjdcfxexcle(HttpServletRequest request,
+			HttpServletResponse response) throws IOException{
+		String a[] = {"企业名称","车牌号码","单车日均订单","单车日均营收(元)","单车日均行驶里程(公里)","单车日均载客时长(分)"};//导出列明
+		String b[] = {"ABB_NAME","VEHICLENO","ZDD","ZYS","ZZKLC","ZZKSJ"};//导出map中的key
+		String time = String.valueOf(request.getParameter("time"));
+		String gzb = time + " 企业日均单车分析";//导出sheet名和导出的文件名
+		String msg = mapServer.qyrjdcfx(request);
+		List<Map<String, Object>>list = DownloadAct.parseJSON2List2(msg);
+		DownloadAct.download(request,response,a,b,gzb,list);
+		return null;
+	}
+	@RequestMapping("/zdmbcx")
+	@ResponseBody
+	public String zdmbcx(HttpServletRequest request){
+		return mapServer.zdmbcx(request);
+	}
+	@RequestMapping("/businessStart")
+	@ResponseBody
+	public String businessStart(HttpServletRequest request){
+		return mapServer.businessStart(request);
+	}
+	@RequestMapping("/businessArrival")
+	@ResponseBody
+	public String businessArrival(HttpServletRequest request){
+		return mapServer.businessArrival(request);
+	}
+	@RequestMapping("/getOverRange")
+	@ResponseBody
+	public String getOverRange(HttpServletRequest request){
+		return mapServer.getOverRange(request);
+	}
+	@RequestMapping("/getareajwd")
+	@ResponseBody
+	public String getareajwd(){
+		return mapServer.getareajwd();
+	}
+	@RequestMapping("/getNoHG")
+	@ResponseBody
+	public String getNoHG(HttpServletRequest request){
+		return mapServer.getNoHG(request);
+	}
+	@RequestMapping("/dailyAverage")
+	@ResponseBody
+	public String dailyAverage(){
+		return mapServer.dailyAverage();
+	}
+	@RequestMapping("/permitNum")
+	@ResponseBody
+	public String permitNum() {
+		return mapServer.permitNum();
+	}
+	@RequestMapping("/getGrid")
+	@ResponseBody
+	public String getGrid(HttpServletRequest request) {
+		return mapServer.getGrid(request);
+	}
+	@RequestMapping("/getDayData")
+	@ResponseBody
+	public String getDayData() {
+		return mapServer.getDayData();
+	}
+	@RequestMapping("/iDayAver")
+	@ResponseBody
+	public String iDayAver() {
+		return mapServer.iDayAver();
+	}
+	@RequestMapping("/getAreaSituation")
+	@ResponseBody
+	public String getAreaSituation() {
+		return mapServer.getAreaSituation();
+	}
+	@RequestMapping("/getService")
+	@ResponseBody
+	public String getService() {
+		return mapServer.getService();
+	}
+	@RequestMapping("/cklxfx")
+	@ResponseBody
+	public String cklxfx(HttpServletRequest request) {
+		return mapServer.cklxfx(request);
+	}
+	@RequestMapping("/cklxfxDetailed")
+	@ResponseBody
+	public String cklxfxDetailed(HttpServletRequest request) {
+		return mapServer.cklxfxDetailed(request);
+	}
+	@RequestMapping("/passengerFlowTo")
+	@ResponseBody
+	public String passengerFlowTo(HttpServletRequest request) {
+		return mapServer.passengerFlowTo(request);
+	}
+	@RequestMapping("/passengerFlowToDetailed")
+	@ResponseBody
+	public String passengerFlowToDetailed(HttpServletRequest request) {
+		return mapServer.passengerFlowToDetailed(request);
+	}
+	@RequestMapping("/gettest")
+	@ResponseBody
+	public String gettest() {
+		return mapServer.gettest();
+	}
+	@RequestMapping("/getZFCX")
+	@ResponseBody
+	public String getZFCX(HttpServletRequest request) {
+		return mapServer.getZFCX(request);
+	}
+	@RequestMapping("/getZFGPS")
+	@ResponseBody
+	public String getZFGPS() {
+		return mapServer.getZFGPS();
+	}
+	@RequestMapping("/addZFDD")
+	@ResponseBody
+	public String addZFDD(HttpServletRequest request) {
+		return mapServer.addZFDD(request);
+	}
+	@RequestMapping("/getEarlyWarningNum")
+	@ResponseBody
+	public String getEarlyWarningNum() {
+		return mapServer.getEarlyWarningNum();
+	}
+}
